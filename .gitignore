@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Project specific
+dataset_blood_group/
+dataset_prepared/
+dataset_split/
+saved_models/
+temp/
+*.db
+blood_group_dataset_*.zip
+checkpoints/
+logs/
+uploads/
+
+# Large files and dependencies
+*.h5
+*.pyd
+*.dll
+*.so
+*.dylib
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+*.ipynb
+
+# Logs and databases
+*.log
+*.sqlite
+*.db 
