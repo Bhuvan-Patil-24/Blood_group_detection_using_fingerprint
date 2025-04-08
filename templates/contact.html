@@ -21,22 +21,42 @@
         
         <div class="card shadow-sm">
             <div class="card-body">
-                <form id="contact-form" method="POST" action="{{ url_for('contact') }}">
+                <form id="contact-form" method="POST" action="{{ url_for('contact') }}" novalidate>
                     <div class="mb-3">
                         <label for="name" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <input type="text" class="form-control" id="name" name="name" required
+                               pattern="[A-Za-z\s]{2,50}" 
+                               title="Name should be between 2-50 characters and contain only letters and spaces">
+                        <div class="invalid-feedback">
+                            Please enter a valid name (2-50 characters, letters and spaces only)
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+                        <input type="email" class="form-control" id="email" name="email" required
+                               pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                               title="Please enter a valid email address">
+                        <div class="invalid-feedback">
+                            Please enter a valid email address
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="subject" class="form-label">Subject</label>
-                        <input type="text" class="form-control" id="subject" name="subject" required>
+                        <input type="text" class="form-control" id="subject" name="subject" required
+                               minlength="5" maxlength="100"
+                               title="Subject should be between 5-100 characters">
+                        <div class="invalid-feedback">
+                            Subject should be between 5-100 characters
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="message" class="form-label">Message</label>
-                        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                        <textarea class="form-control" id="message" name="message" rows="5" required
+                                  minlength="10" maxlength="1000"
+                                  title="Message should be between 10-1000 characters"></textarea>
+                        <div class="invalid-feedback">
+                            Message should be between 10-1000 characters
+                        </div>
                     </div>
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary">Send Message</button>
@@ -77,4 +97,35 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('contact-form');
+    
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        form.classList.add('was-validated');
+    });
+    
+    // Add real-time validation
+    const inputs = form.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+});
+</script>
 {% endblock %} 

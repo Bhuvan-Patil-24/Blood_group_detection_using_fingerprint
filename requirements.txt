@@ -13,7 +13,7 @@ scikit-learn==1.6.1
 pandas==2.2.1
 
 # Database
-SQLAlchemy==2.0.27
+SQLAlchemy==2.0.25
 Flask-SQLAlchemy==3.1.1
 mysqlclient==2.2.4
 
@@ -34,3 +34,6 @@ flake8==7.0.0
 # Utilities
 tqdm==4.66.2
 python-magic==0.4.27
+
+# Additional
+Flask-Mail==0.9.1

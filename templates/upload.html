@@ -1,184 +1,157 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload - Blood Group Detection</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        .upload-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 30px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-        .preview-container {
-            margin-top: 20px;
-            display: none;
-        }
-        #imagePreview {
-            max-width: 100%;
-            max-height: 300px;
-            margin: 0 auto;
-            display: block;
-            border-radius: 5px;
-        }
-        .result-container {
-            margin-top: 20px;
-            display: none;
-            text-align: center;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
-        }
-        .blood-group {
-            font-size: 32px;
-            font-weight: bold;
-            color: #dc3545;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">Blood Group Detection</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/upload">Upload</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/results">Results</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/about">About</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">Upload Fingerprint Image</h1>
+{% block title %}Upload - Print2Type{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Upload Fingerprint Image</h1>
+    
+    <div class="upload-container">
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="fileInput" class="form-label">Select an image of a fingerprint:</label>
+                <input class="form-control" type="file" id="fileInput" accept="image/*" required>
+            </div>
+            <div class="d-grid">
+                <button class="btn btn-primary" type="submit">Analyze</button>
+            </div>
+        </form>
         
-        <div class="upload-container">
-            <form id="uploadForm" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="fileInput" class="form-label">Select an image of a fingerprint:</label>
-                    <input class="form-control" type="file" id="fileInput" accept="image/*" required>
-                </div>
-                <div class="d-grid">
-                    <button class="btn btn-primary" type="submit">Analyze</button>
-                </div>
-            </form>
-            
-            <div class="preview-container">
-                <h4 class="text-center mb-3">Image Preview</h4>
-                <img id="imagePreview" src="#" alt="Image Preview">
+        <div class="preview-container">
+            <h4 class="text-center mb-3">Image Preview</h4>
+            <img id="imagePreview" src="#" alt="Image Preview">
+        </div>
+        
+        <div class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
-            
-            <div class="loading">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Analyzing fingerprint...</p>
-            </div>
-            
-            <div class="result-container">
-                <h4>Detected Blood Group:</h4>
-                <div class="blood-group" id="bloodGroup">A+</div>
-                <p>Confidence: <span id="confidence">95%</span></p>
-                <button class="btn btn-secondary mt-3" id="newAnalysis">Analyze Another Image</button>
-            </div>
+            <p class="mt-2">Analyzing fingerprint...</p>
+        </div>
+        
+        <div class="result-container">
+            <h4>Detected Blood Group:</h4>
+            <div class="blood-group" id="bloodGroup">A+</div>
+            <p>Confidence: <span id="confidence">95%</span></p>
+            <button class="btn btn-secondary mt-3" id="newAnalysis">Analyze Another Image</button>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const uploadForm = document.getElementById('uploadForm');
-            const fileInput = document.getElementById('fileInput');
-            const imagePreview = document.getElementById('imagePreview');
-            const previewContainer = document.querySelector('.preview-container');
-            const loadingElement = document.querySelector('.loading');
-            const resultContainer = document.querySelector('.result-container');
-            const bloodGroupElement = document.getElementById('bloodGroup');
-            const confidenceElement = document.getElementById('confidence');
-            const newAnalysisButton = document.getElementById('newAnalysis');
-            
-            // Show image preview when file is selected
-            fileInput.addEventListener('change', function(e) {
-                if (e.target.files.length > 0) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        imagePreview.src = e.target.result;
-                        previewContainer.style.display = 'block';
-                    }
-                    reader.readAsDataURL(e.target.files[0]);
+{% block extra_css %}
+<style>
+    .upload-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+    .preview-container {
+        margin-top: 20px;
+        display: none;
+    }
+    #imagePreview {
+        max-width: 100%;
+        max-height: 300px;
+        margin: 0 auto;
+        display: block;
+        border-radius: 5px;
+    }
+    .result-container {
+        margin-top: 20px;
+        display: none;
+        text-align: center;
+    }
+    .loading {
+        display: none;
+        text-align: center;
+        margin-top: 20px;
+    }
+    .blood-group {
+        font-size: 32px;
+        font-weight: bold;
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewContainer = document.querySelector('.preview-container');
+        const loadingElement = document.querySelector('.loading');
+        const resultContainer = document.querySelector('.result-container');
+        const bloodGroupElement = document.getElementById('bloodGroup');
+        const confidenceElement = document.getElementById('confidence');
+        const newAnalysisButton = document.getElementById('newAnalysis');
+        
+        // Show image preview when file is selected
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
                 }
-            });
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+        
+        // Handle form submission
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            // Handle form submission
-            uploadForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                if (fileInput.files.length === 0) {
-                    alert('Please select an image file');
-                    return;
-                }
-                
-                const formData = new FormData();
-                formData.append('file', fileInput.files[0]);
-                
-                // Show loading indicator
-                uploadForm.style.display = 'none';
-                loadingElement.style.display = 'block';
-                
-                // Send API request
-                fetch('/predict', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert('Error: ' + data.error);
-                        uploadForm.style.display = 'block';
-                        loadingElement.style.display = 'none';
-                    } else {
-                        // Show result
-                        bloodGroupElement.textContent = data.blood_group;
-                        confidenceElement.textContent = (data.confidence * 100).toFixed(2) + '%';
-                        loadingElement.style.display = 'none';
-                        resultContainer.style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    alert('Error: ' + error.message);
+            if (fileInput.files.length === 0) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            // Show loading indicator
+            uploadForm.style.display = 'none';
+            loadingElement.style.display = 'block';
+            
+            // Send API request
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
                     uploadForm.style.display = 'block';
                     loadingElement.style.display = 'none';
-                });
-            });
-            
-            // Reset form for new analysis
-            newAnalysisButton.addEventListener('click', function() {
-                resultContainer.style.display = 'none';
+                } else {
+                    // Show result
+                    bloodGroupElement.textContent = data.blood_group;
+                    confidenceElement.textContent = (data.confidence * 100).toFixed(2) + '%';
+                    loadingElement.style.display = 'none';
+                    resultContainer.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
                 uploadForm.style.display = 'block';
-                fileInput.value = '';
-                previewContainer.style.display = 'none';
+                loadingElement.style.display = 'none';
             });
         });
-    </script>
-</body>
-</html> 
+        
+        // Reset form for new analysis
+        newAnalysisButton.addEventListener('click', function() {
+            resultContainer.style.display = 'none';
+            uploadForm.style.display = 'block';
+            fileInput.value = '';
+            previewContainer.style.display = 'none';
+        });
+    });
+</script>
+{% endblock %} 

@@ -2,6 +2,8 @@ import sqlite3
 import os
 import json
 from datetime import datetime
+from . import db
+from .models import ContactMessage
 
 class DatabaseManager:
     def __init__(self, db_path='predictions.db'):
@@ -28,7 +30,12 @@ class DatabaseManager:
         conn.commit()
         conn.close()
     
-    def save_prediction(self, blood_group, confidence, image_path, features):
+    def init_app(self, app):
+        db.init_app(app)
+        with app.app_context():
+            db.create_all()
+    
+    def save_prediction(self, blood_group, confidence, image_path, features=None):
         """Save a new prediction to the database"""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -109,3 +116,39 @@ class DatabaseManager:
         except Exception as e:
             print(f"Error getting prediction by ID: {str(e)}")
             return None
+    
+    def save_contact_message(self, name, email, subject, message):
+        """Save a new contact message to the database."""
+        try:
+            message = ContactMessage(
+                name=name,
+                email=email,
+                subject=subject,
+                message=message
+            )
+            db.session.add(message)
+            db.session.commit()
+            return message
+        except Exception as e:
+            db.session.rollback()
+            raise e
+    
+    def get_contact_messages(self, limit=50, unread_only=False):
+        """Get contact messages from the database."""
+        query = ContactMessage.query
+        if unread_only:
+            query = query.filter_by(is_read=False)
+        return query.order_by(ContactMessage.created_at.desc()).limit(limit).all()
+    
+    def mark_message_as_read(self, message_id):
+        """Mark a message as read."""
+        try:
+            message = ContactMessage.query.get(message_id)
+            if message:
+                message.is_read = True
+                db.session.commit()
+                return True
+            return False
+        except Exception as e:
+            db.session.rollback()
+            raise e
