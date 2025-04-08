@@ -1,13 +1,16 @@
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, flash, redirect, url_for
 import numpy as np
 from model.model import BloodGroupModel
 from preprocessing.image_processor import ImageProcessor
 from database.db_manager import DatabaseManager
 from api_routes import api_bp
 import tensorflow as tf
+import secrets
 
 app = Flask(__name__)
+# Generate a secure random key for the application
+app.secret_key = secrets.token_hex(32)  # Generates a 64-character hexadecimal string
 model = BloodGroupModel()
 image_processor = ImageProcessor()
 db_manager = DatabaseManager()
@@ -32,6 +35,25 @@ if os.path.exists(CLASS_NAMES_PATH):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        # Get form data
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject = request.form.get('subject')
+        message = request.form.get('message')
+        
+        # Here you would typically:
+        # 1. Validate the form data
+        # 2. Send an email or store in database
+        # 3. Show a success message
+        
+        flash('Thank you for your message! We will get back to you soon.', 'success')
+        return redirect(url_for('contact'))
+    
+    return render_template('contact.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
