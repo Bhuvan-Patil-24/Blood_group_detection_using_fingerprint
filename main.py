@@ -10,6 +10,10 @@ import tensorflow as tf
 import secrets
 import re
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,15 +25,15 @@ app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///contact_messages.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///contact_messages.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Email configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'patilbhuvan27@gmail.com'  # Replace with your email
-app.config['MAIL_PASSWORD'] = 'kfur lxrm turz qdlr'     # Replace with your app password
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
 # Initialize extensions
 mail = Mail(app)
@@ -62,109 +66,66 @@ def index():
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'POST':
-        # Get form data
-        name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip()
-        subject = request.form.get('subject', '').strip()
-        message = request.form.get('message', '').strip()
+        name = request.form.get('name')
+        email = request.form.get('email')
+        subject = request.form.get('subject')
+        message = request.form.get('message')
         
         # Server-side validation
-        errors = []
-        
-        # Name validation
-        if not name:
-            errors.append('Name is required')
-        elif not re.match(r'^[A-Za-z\s]{2,50}$', name):
-            errors.append('Name should be between 2-50 characters and contain only letters and spaces')
-        
-        # Email validation
-        if not email:
-            errors.append('Email is required')
-        elif not re.match(r'^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$', email.lower()):
-            errors.append('Please enter a valid email address')
-        
-        # Subject validation
-        if not subject:
-            errors.append('Subject is required')
-        elif len(subject) < 5 or len(subject) > 100:
-            errors.append('Subject should be between 5-100 characters')
-        
-        # Message validation
-        if not message:
-            errors.append('Message is required')
-        elif len(message) < 10 or len(message) > 1000:
-            errors.append('Message should be between 10-1000 characters')
-        
-        if errors:
-            for error in errors:
-                flash(error, 'danger')
+        if not name or not email or not subject or not message:
+            flash('All fields are required', 'error')
             return redirect(url_for('contact'))
-        
-        # If validation passes, process the message
+            
         try:
             # Save message to database
             db_manager.save_contact_message(name, email, subject, message)
-            logger.info(f"Message saved to database from {email}")
             
-            # Send email notification
-            try:
-                # Send notification to admin
-                admin_msg = Message(
-                    subject=f"New Contact Form Submission: {subject}",
-                    sender=app.config['MAIL_USERNAME'],
-                    recipients=[app.config['MAIL_USERNAME']],  # Send to admin email
-                    reply_to=email
-                )
-                admin_msg.body = f"""
-                New contact form submission from {name} ({email}):
-                
-                Subject: {subject}
-                
-                Message:
-                {message}
-                
-                Please respond to this message at your earliest convenience.
-                """
-                
-                mail.send(admin_msg)
-                logger.info(f"Admin notification email sent for message from {email}")
-                
-                # Send confirmation email to the user who submitted the form
-                user_msg = Message(
-                    subject="Thank you for contacting Print2Type",
-                    sender=app.config['MAIL_USERNAME'],
-                    recipients=[email],  # Send to the user's email
-                    reply_to=app.config['MAIL_USERNAME']
-                )
-                user_msg.body = f"""
-                Dear {name},
-                
-                Thank you for contacting Print2Type. We have received your message and will get back to you soon.
-                
-                Your message:
-                {message}
-                
-                Best regards,
-                Print2Type Team
-                """
-                
-                mail.send(user_msg)
-                logger.info(f"Confirmation email sent to {email}")
-                
-                flash('Thank you for your message! We will get back to you soon.', 'success')
-                return redirect(url_for('contact'))
-                
-            except Exception as e:
-                logger.error(f"Email sending error: {str(e)}")
-                # Even if email sending fails, we still saved the message
-                flash('Your message has been received. We will get back to you soon.', 'success')
-                return redirect(url_for('contact'))
+            # Send notification to admin
+            admin_msg = Message(
+                subject=f'New Contact Form Submission: {subject}',
+                sender=app.config['MAIL_USERNAME'],
+                recipients=[app.config['MAIL_USERNAME']],
+                reply_to=email
+            )
+            admin_msg.body = f'''
+            New message from {name} ({email}):
+            
+            Subject: {subject}
+            
+            Message:
+            {message}
+            '''
+            
+            # Send confirmation to user
+            user_msg = Message(
+                subject=f'Thank you for contacting us - {subject}',
+                sender=app.config['MAIL_USERNAME'],
+                recipients=[email],
+                reply_to=app.config['MAIL_USERNAME']
+            )
+            user_msg.body = f'''
+            Dear {name},
+            
+            Thank you for contacting us. We have received your message and will get back to you soon.
+            
+            Your message:
+            {message}
+            
+            Best regards,
+            Print2Type Team
+            '''
+            
+            mail.send(admin_msg)
+            mail.send(user_msg)
+            
+            flash('Your message has been sent successfully!', 'success')
+            return redirect(url_for('contact'))
             
         except Exception as e:
-            logger.error(f"Database error: {str(e)}")
-            flash('An error occurred while saving your message. Please try again later.', 'danger')
+            flash('An error occurred while processing your message. Please try again later.', 'error')
+            app.logger.error(f'Error sending email: {str(e)}')
             return redirect(url_for('contact'))
-    
+            
     return render_template('contact.html')
 
 @app.route('/predict', methods=['POST'])
