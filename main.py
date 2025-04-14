@@ -8,9 +8,9 @@ from database.db_manager import DatabaseManager
 from api_routes import api_bp
 import tensorflow as tf
 import secrets
-import re
 import logging
 from dotenv import load_dotenv
+from database.models import Prediction
 
 # Load environment variables
 load_dotenv()
@@ -171,9 +171,32 @@ def upload_form():
 
 @app.route('/results')
 def results():
-    # Get last 10 predictions from database
-    predictions = db_manager.get_recent_predictions(10)
-    return render_template('results.html', predictions=predictions)
+    # Get page number from query parameters, default to 1
+    page = request.args.get('page', 1, type=int)
+    # Number of items per page
+    per_page = 10
+    
+    # Get paginated predictions ordered by timestamp (newest first)
+    pagination = Prediction.query.order_by(Prediction.timestamp.desc()).paginate(
+        page=page, 
+        per_page=per_page,
+        error_out=False
+    )
+    
+    # Format the predictions for display
+    formatted_predictions = []
+    for pred in pagination.items:
+        formatted_predictions.append({
+            'id': pred.id,
+            'fingerprint_path': pred.fingerprint_path,
+            'blood_group': pred.blood_group,
+            'confidence': f"{pred.confidence:.2f}%",
+            'timestamp': pred.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        })
+    
+    return render_template('results.html', 
+                         predictions=formatted_predictions,
+                         pagination=pagination)
 
 @app.route('/about')
 def about():

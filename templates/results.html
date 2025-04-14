@@ -4,100 +4,95 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Prediction Results</h1>
+    <h2 class="text-center mb-4">Prediction Results</h2>
     
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Blood Group</th>
-                            <th>Confidence</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsTable">
-                        <tr>
-                            <td colspan="5" class="text-center">Loading results...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    {% if predictions %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Fingerprint</th>
+                    <th>Blood Group</th>
+                    <th>Confidence</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pred in predictions %}
+                <tr>
+                    <td>{{ pred.id }}</td>
+                    <td>
+                        <img src="{{ url_for('static', filename=pred.fingerprint_path) }}" 
+                             alt="Fingerprint" 
+                             class="img-thumbnail" 
+                             style="max-width: 100px;">
+                    </td>
+                    <td>{{ pred.blood_group }}</td>
+                    <td>{{ pred.confidence }}</td>
+                    <td>{{ pred.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <div class="text-center">
-        <a href="/upload" class="btn btn-primary">Make New Prediction</a>
+    {# Pagination Controls #}
+    <nav aria-label="Prediction results pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('results', page=pagination.prev_num) }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&laquo;</span>
+            </li>
+            {% endif %}
+
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != pagination.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('results', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('results', page=pagination.next_num) }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&raquo;</span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <div class="text-center mt-2">
+        <p class="text-muted">
+            Showing {{ pagination.items|length }} of {{ pagination.total }} predictions
+        </p>
     </div>
+    {% else %}
+    <div class="alert alert-info">
+        No prediction history available.
+    </div>
+    {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const resultsTable = document.getElementById('resultsTable');
-        
-        // Function to format date
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleString();
-        }
-        
-        // Function to get status color based on confidence
-        function getStatusColor(confidence) {
-            if (confidence >= 0.8) return 'status-success';
-            if (confidence >= 0.6) return 'status-warning';
-            return 'status-danger';
-        }
-        
-        // Fetch and display results
-        fetch('/api/predictions')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.length === 0) {
-                    resultsTable.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="text-center">
-                                No predictions have been made yet. 
-                                <a href="/upload">Upload an image</a> to get started.
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-                
-                resultsTable.innerHTML = data.map(result => `
-                    <tr>
-                        <td>${result.id || 'N/A'}</td>
-                        <td>${result.blood_group || 'Unknown'}</td>
-                        <td>${(result.confidence * 100).toFixed(2)}%</td>
-                        <td>${formatDate(result.timestamp)}</td>
-                        <td>
-                            <span class="status-indicator ${getStatusColor(result.confidence)}"></span>
-                            ${result.confidence >= 0.8 ? 'High Confidence' : 
-                              result.confidence >= 0.6 ? 'Medium Confidence' : 'Low Confidence'}
-                        </td>
-                    </tr>
-                `).join('');
-            })
-            .catch(error => {
-                console.error('Error fetching results:', error);
-                resultsTable.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="text-center text-danger">
-                            Error loading results. Please try again later.
-                        </td>
-                    </tr>
-                `;
-            });
-    });
-</script>
 {% endblock %} 
