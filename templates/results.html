@@ -23,13 +23,28 @@
                 <tr>
                     <td>{{ pred.id }}</td>
                     <td>
-                        <img src="{{ url_for('static', filename=pred.fingerprint_path) }}" 
-                             alt="Fingerprint" 
-                             class="img-thumbnail" 
-                             style="max-width: 100px;">
+                        <div style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <img src="{{ url_for('static', filename=pred.fingerprint_path) }}" 
+                                 alt="Fingerprint" 
+                                 class="img-thumbnail" 
+                                 style="width: 100px; height: 100px; object-fit: cover;">
+                        </div>
                     </td>
-                    <td>{{ pred.blood_group }}</td>
-                    <td>{{ pred.confidence }}</td>
+                    <td>
+                        <span class="badge bg-danger text-white" style="font-size: 16px; padding: 8px 12px;">
+                            {{ pred.blood_group }}
+                        </span>
+                    </td>
+                    <td>
+                        {% set confidence = pred.confidence|replace('%', '')|float %}
+                        {% if confidence > 80 %}
+                            <span class="text-success font-weight-bold">{{ pred.confidence }}</span>
+                        {% elif confidence > 60 %}
+                            <span class="text-warning font-weight-bold">{{ pred.confidence }}</span>
+                        {% else %}
+                            <span class="text-danger font-weight-bold">{{ pred.confidence }}</span>
+                        {% endif %}
+                    </td>
                     <td>{{ pred.timestamp }}</td>
                 </tr>
                 {% endfor %}
@@ -43,12 +58,12 @@
             {% if pagination.has_prev %}
             <li class="page-item">
                 <a class="page-link" href="{{ url_for('results', page=pagination.prev_num) }}" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
+                    <span aria-hidden="true">&laquo;</span> Previous
                 </a>
             </li>
             {% else %}
             <li class="page-item disabled">
-                <span class="page-link" aria-hidden="true">&laquo;</span>
+                <span class="page-link" aria-hidden="true">&laquo; Previous</span>
             </li>
             {% endif %}
 
@@ -73,12 +88,12 @@
             {% if pagination.has_next %}
             <li class="page-item">
                 <a class="page-link" href="{{ url_for('results', page=pagination.next_num) }}" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
+                    Next <span aria-hidden="true">&raquo;</span>
                 </a>
             </li>
             {% else %}
             <li class="page-item disabled">
-                <span class="page-link" aria-hidden="true">&raquo;</span>
+                <span class="page-link" aria-hidden="true">Next &raquo;</span>
             </li>
             {% endif %}
         </ul>
@@ -86,12 +101,33 @@
 
     <div class="text-center mt-2">
         <p class="text-muted">
+            Page {{ pagination.page }} of {{ pagination.pages }} | 
             Showing {{ pagination.items|length }} of {{ pagination.total }} predictions
+            {% if pagination.total > 5 %}
+            (5 per page)
+            {% endif %}
         </p>
     </div>
+    
+    <div class="text-center mt-4 mb-5">
+        <a href="{{ url_for('upload_form') }}" class="btn btn-lg" style="background-color: #8B0000; color: white;">
+            <i class="fa fa-upload"></i> Make New Prediction
+        </a>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('clear_predictions') }}" class="btn btn-lg ml-2" style="background-color: #8B0000; color: white;" 
+           onclick="return confirm('Are you sure you want to clear all predictions? This cannot be undone.');">
+            <i class="fa fa-trash"></i> Clear All Predictions
+        </a>
+        {% endif %}
+    </div>
     {% else %}
-    <div class="alert alert-info">
-        No prediction history available.
+    <div class="alert alert-info mb-5">
+        <p>No prediction history available.</p>
+        <p>
+            <a href="{{ url_for('upload_form') }}" class="btn btn-lg" style="background-color: #8B0000; color: white;">
+                <i class="fa fa-upload"></i> Upload a Fingerprint
+            </a>
+        </p>
     </div>
     {% endif %}
 </div>

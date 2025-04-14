@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Print2Type{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mb-4">Your Profile</h2>
+    
+    <div class="row">
+        <!-- User information -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background-color: #8B0000; color: white;">
+                    <h3 class="mb-0">Account Information</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Username:</strong> {{ current_user.username }}</p>
+                    <p><strong>Email:</strong> {{ current_user.email }}</p>
+                    <p><strong>Member since:</strong> {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+                    <p><strong>Last login:</strong> 
+                        {% if current_user.last_login %}
+                            {{ current_user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </p>
+                    <p><strong>Account type:</strong> 
+                        {% if current_user.is_admin %}
+                            <span class="badge bg-danger">Administrator</span>
+                        {% else %}
+                            <span class="badge bg-primary">User</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User predictions -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header" style="background-color: #8B0000; color: white;">
+                    <h3 class="mb-0">Your Predictions</h3>
+                </div>
+                <div class="card-body">
+                    {% if predictions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Fingerprint</th>
+                                        <th>Blood Group</th>
+                                        <th>Confidence</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pred in predictions %}
+                                    <tr>
+                                        <td>
+                                            <div style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                                <img src="{{ url_for('static', filename=pred.fingerprint_path) }}" 
+                                                     alt="Fingerprint" 
+                                                     class="img-thumbnail" 
+                                                     style="width: 60px; height: 60px; object-fit: cover;">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">{{ pred.blood_group }}</span>
+                                        </td>
+                                        <td>{{ "%.2f"|format(pred.confidence) }}%</td>
+                                        <td>{{ pred.timestamp.strftime('%Y-%m-%d') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('upload_form') }}" class="btn btn-lg" style="background-color: #8B0000; color: white;">
+                                <i class="fa fa-upload"></i> New Prediction
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p>You haven't made any predictions yet.</p>
+                            <a href="{{ url_for('upload_form') }}" class="btn btn-lg mt-2" style="background-color: #8B0000; color: white;">
+                                <i class="fa fa-upload"></i> Make Your First Prediction
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -6,6 +6,7 @@
 <div class="container mt-5">
     <h1 class="text-center mb-4">Upload Fingerprint Image</h1>
     
+    {% if current_user.is_authenticated %}
     <div class="upload-container">
         <form id="uploadForm" enctype="multipart/form-data">
             <div class="mb-3">
@@ -13,7 +14,7 @@
                 <input class="form-control" type="file" id="fileInput" accept="image/*" required>
             </div>
             <div class="d-grid">
-                <button class="btn btn-primary" type="submit">Analyze</button>
+                <button class="btn btn-lg" type="submit" style="background-color: #8B0000; color: white;">Analyze</button>
             </div>
         </form>
         
@@ -33,9 +34,39 @@
             <h4>Detected Blood Group:</h4>
             <div class="blood-group" id="bloodGroup">A+</div>
             <p>Confidence: <span id="confidence">95%</span></p>
-            <button class="btn btn-secondary mt-3" id="newAnalysis">Analyze Another Image</button>
+            <button class="btn btn-lg mt-3" id="newAnalysis" style="background-color: #8B0000; color: white;">
+                Analyze Another Image
+            </button>
+            <a href="{{ url_for('results') }}" class="btn btn-lg mt-3 ms-2" style="background-color: #8B0000; color: white;">
+                View All Results
+            </a>
+        </div>
+        
+        <div class="error-container" style="display: none;">
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Error</h4>
+                <p id="errorMessage"></p>
+            </div>
+            <button class="btn btn-lg mt-3" id="tryAgain" style="background-color: #8B0000; color: white;">
+                Try Again
+            </button>
         </div>
     </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h4 class="alert-heading">Login Required</h4>
+        <p>You need to be logged in to upload and analyze fingerprint images.</p>
+        <hr>
+        <p class="mb-0">
+            <a href="{{ url_for('login') }}" class="btn btn-lg" style="background-color: #8B0000; color: white;">
+                Login
+            </a>
+            <a href="{{ url_for('register') }}" class="btn btn-lg ms-2" style="background-color: #8B0000; color: white;">
+                Register
+            </a>
+        </p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -73,7 +104,11 @@
     .blood-group {
         font-size: 32px;
         font-weight: bold;
-        color: #dc3545;
+        color: #8B0000;
+    }
+    .error-container {
+        margin-top: 20px;
+        text-align: center;
     }
 </style>
 {% endblock %}
@@ -81,15 +116,19 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        {% if current_user.is_authenticated %}
         const uploadForm = document.getElementById('uploadForm');
         const fileInput = document.getElementById('fileInput');
         const imagePreview = document.getElementById('imagePreview');
         const previewContainer = document.querySelector('.preview-container');
         const loadingElement = document.querySelector('.loading');
         const resultContainer = document.querySelector('.result-container');
+        const errorContainer = document.querySelector('.error-container');
+        const errorMessage = document.getElementById('errorMessage');
         const bloodGroupElement = document.getElementById('bloodGroup');
         const confidenceElement = document.getElementById('confidence');
         const newAnalysisButton = document.getElementById('newAnalysis');
+        const tryAgainButton = document.getElementById('tryAgain');
         
         // Show image preview when file is selected
         fileInput.addEventListener('change', function(e) {
@@ -117,31 +156,45 @@
             
             // Show loading indicator
             uploadForm.style.display = 'none';
+            errorContainer.style.display = 'none';
             loadingElement.style.display = 'block';
             
             // Send API request
             fetch('/predict', {
                 method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    uploadForm.style.display = 'block';
-                    loadingElement.style.display = 'none';
-                } else {
-                    // Show result
-                    bloodGroupElement.textContent = data.blood_group;
-                    confidenceElement.textContent = (data.confidence * 100).toFixed(2) + '%';
-                    loadingElement.style.display = 'none';
-                    resultContainer.style.display = 'block';
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
                 }
             })
-            .catch(error => {
-                alert('Error: ' + error.message);
-                uploadForm.style.display = 'block';
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // Unauthorized - redirect to login
+                        window.location.href = "{{ url_for('login') }}?next={{ url_for('upload_form') }}";
+                        throw new Error('Login required');
+                    }
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                // Show result
+                bloodGroupElement.textContent = data.blood_group;
+                confidenceElement.textContent = (data.confidence * 100).toFixed(2) + '%';
                 loadingElement.style.display = 'none';
+                resultContainer.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingElement.style.display = 'none';
+                errorMessage.textContent = error.message || 'An unexpected error occurred';
+                errorContainer.style.display = 'block';
             });
         });
         
@@ -152,6 +205,13 @@
             fileInput.value = '';
             previewContainer.style.display = 'none';
         });
+        
+        // Try again after error
+        tryAgainButton.addEventListener('click', function() {
+            errorContainer.style.display = 'none';
+            uploadForm.style.display = 'block';
+        });
+        {% endif %}
     });
 </script>
 {% endblock %} 
