@@ -44,7 +44,6 @@ dataset_split/
 saved_models/
 temp/
 *.db
-blood_group_dataset_*.zip
 checkpoints/
 logs/
 uploads/
