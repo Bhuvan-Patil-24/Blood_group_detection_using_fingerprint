@@ -10,7 +10,7 @@ import argparse
 
 def prepare_dataset(source_path, output_path="dataset_prepared", train_ratio=0.7, val_ratio=0.2, test_ratio=0.1):
     """Prepare the dataset with proper train/val/test split and create a zip file for training elsewhere"""
-    print("\nPreparing dataset with 70/20/10 split...")
+    print("\nPreparing dataset with 70/20/10 split......")
     
     # Create directories for train/val/test splits
     train_dir = os.path.join(output_path, "train")
