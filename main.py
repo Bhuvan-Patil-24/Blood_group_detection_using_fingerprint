@@ -7,7 +7,7 @@ import secrets
 import logging
 from dotenv import load_dotenv
 from database.models import db, Prediction, ContactMessage, User
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import io
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from datetime import datetime
