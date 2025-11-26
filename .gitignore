@@ -19,7 +19,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
+*.zip
 venv_eval/Environment
 venv/
 venv_eval/
@@ -29,14 +29,14 @@ ENV/
 .venv
 env.bak/
 venv.bak/
-
+demo.py
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 .DS_Store
-
+Blood_group_detection_using_fingerprint/feature_extraction/data
 # Project specific
 dataset_blood_group/
 dataset_prepared/
@@ -47,7 +47,7 @@ temp/
 checkpoints/
 logs/
 uploads/
-
+feature_extraction/data/
 # Large files and dependencies
 *.h5
 *.pyd

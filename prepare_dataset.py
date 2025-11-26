@@ -2,10 +2,7 @@ import os
 import shutil
 from sklearn.model_selection import train_test_split
 import zipfile
-import numpy as np
 from datetime import datetime
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
 import argparse
 
 def prepare_dataset(source_path, output_path="dataset_prepared", train_ratio=0.7, val_ratio=0.2, test_ratio=0.1):

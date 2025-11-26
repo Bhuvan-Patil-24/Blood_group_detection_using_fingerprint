@@ -1,117 +1,231 @@
+"""
+Fingerprint Image Preprocessor for Blood Group Detection
+Optimized pipeline for fingerprint enhancement and normalization
+"""
+
 import cv2
 import numpy as np
-from skimage import exposure
+from pathlib import Path
+
 
 class ImageProcessor:
-    def __init__(self):
-        self.img_height = 128
-        self.img_width = 128
+    """
+    Preprocessing pipeline for fingerprint images before ML model training/inference
+    """
     
-    def process_image(self, image_path):
+    def __init__(self, target_size=(128, 128)):
         """
-        Process fingerprint image for feature extraction
-        Steps:
-        1. Load and resize image
-        2. Convert to grayscale
-        3. Apply advanced fingerprint enhancement
-        4. Return normalized image
+        Initialize preprocessor with target image dimensions
+        
+        Args:
+            target_size (tuple): Target dimensions (width, height) for output image
+        """
+        self.target_width, self.target_height = target_size
+        
+    def preprocess_fingerprint(self, image_path):
+        """
+        Main preprocessing pipeline for fingerprint images
+        
+        Args:
+            image_path (str): Path to input fingerprint image
+            
+        Returns:
+            np.ndarray: Preprocessed image as float32 array normalized to [0,1]
+            
+        Raises:
+            FileNotFoundError: If image file doesn't exist
+            ValueError: If image cannot be loaded or processed
         """
         try:
-            # Load image
-            img = cv2.imread(image_path)
-            if img is None:
-                raise ValueError(f"Could not load image from {image_path}")
+            # Step 1: Validate and load image
+            img = self._load_image(image_path)
             
-            # Resize image while maintaining aspect ratio
-            aspect = img.shape[1] / img.shape[0]
-            if aspect > 1:
-                new_width = self.img_width
-                new_height = int(self.img_width / aspect)
-            else:
-                new_height = self.img_height
-                new_width = int(self.img_height * aspect)
+            # Step 2: Resize with aspect ratio preservation and padding
+            resized_img = self._resize_with_padding(img)
             
-            resized = cv2.resize(img, (new_width, new_height))
+            # Step 3: Convert to grayscale
+            gray_img = self._convert_to_grayscale(resized_img)
             
-            # Create a black canvas of target size
-            processed_img = np.zeros((self.img_height, self.img_width, 3), dtype=np.uint8)
+            # Step 4: Noise reduction using bilateral filtering
+            denoised_img = self._reduce_noise(gray_img)
             
-            # Calculate padding
-            y_offset = (self.img_height - new_height) // 2
-            x_offset = (self.img_width - new_width) // 2
+            # # Step 6: Ridge enhancement using Gabor filters
+            # ridge_enhanced_img = self._enhance_ridges(denoised_img)
             
-            # Place the resized image in the center
-            processed_img[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = resized
+            # Step 7: Adaptive thresholding for better ridge clarity
+            thresholded_img = self._apply_adaptive_threshold(denoised_img)
             
-            # Convert to grayscale
-            gray = cv2.cvtColor(processed_img, cv2.COLOR_BGR2GRAY)
+            # # Step 8: Morphological cleanup
+            # cleaned_img = self._morphological_cleanup(thresholded_img)
             
-            # Advanced fingerprint enhancement
-            # 1. Noise reduction with bilateral filter (preserves edges better)
-            denoised = cv2.bilateralFilter(gray, 9, 75, 75)
+            # Step 9: Normalize to [0, 1] range as float32
+            normalized_img = self._normalize_image(thresholded_img)
             
-            # 2. Enhance contrast using CLAHE with optimal parameters
-            clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-            enhanced = clahe.apply(denoised)
-            
-            # 3. Ridge enhancement using Gabor filter
-            # Prepare the kernel size
-            ksize = 31
-            sigma = 4.5
-            theta = np.pi/4
-            lambd = 10
-            gamma = 0.5
-            
-            kernel = cv2.getGaborKernel((ksize, ksize), sigma, theta, lambd, gamma, 0, ktype=cv2.CV_32F)
-            ridge_enhanced = cv2.filter2D(enhanced, cv2.CV_8UC3, kernel)
-            
-            # 4. Local adaptive thresholding
-            binary = cv2.adaptiveThreshold(
-                ridge_enhanced,
-                255,
-                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                cv2.THRESH_BINARY_INV,
-                21,  # Larger block size for better adaptation
-                4    # Slightly increased C value
-            )
-            
-            # 5. Morphological operations for cleanup
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-            cleaned = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-            
-            # Convert back to RGB
-            processed_img = cv2.cvtColor(cleaned, cv2.COLOR_GRAY2RGB)
-            
-            # Normalize to float32 in range [0, 1]
-            processed_img = processed_img.astype(np.float32)
-            
-            return processed_img
+            return normalized_img
             
         except Exception as e:
-            print(f"Error processing image: {str(e)}")
-            raise ValueError(f"Image processing failed: {str(e)}")
+            raise ValueError(f"Preprocessing failed for {image_path}: {str(e)}")
     
-    def segment_fingerprint(self, img):
+    def _load_image(self, image_path):
+        """Load and validate image file"""
+        # Check if file exists
+        if not Path(image_path).exists():
+            raise FileNotFoundError(f"Image file not found: {image_path}")
+        
+        # Load image
+        img = cv2.imread(str(image_path))
+        
+        if img is None:
+            raise ValueError(f"Failed to load image. Check if file is a valid image: {image_path}")
+        
+        return img
+    
+    def _resize_with_padding(self, img):
         """
-        Segment fingerprint from background
+        Resize image to target size while maintaining aspect ratio
+        Pad with black background to fit exact dimensions
         """
-        if len(img.shape) == 3:
-            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        h, w = img.shape[:2]
+        
+        # Calculate aspect ratio
+        aspect_ratio = w / h
+        target_aspect = self.target_width / self.target_height
+        
+        # Determine new dimensions maintaining aspect ratio
+        if aspect_ratio > target_aspect:
+            # Width is limiting factor
+            new_width = self.target_width
+            new_height = int(self.target_width / aspect_ratio)
         else:
-            gray = img
-            
-        # Otsu's thresholding
-        ret, mask = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            # Height is limiting factor
+            new_height = self.target_height
+            new_width = int(self.target_height * aspect_ratio)
         
-        # Noise removal with morphological operations
-        kernel = np.ones((3, 3), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=2)
+        # Resize image
+        resized = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_AREA)
         
-        # Find sure foreground area
-        dist_transform = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
-        ret, sure_fg = cv2.threshold(dist_transform, 0.5 * dist_transform.max(), 255, 0)
+        # Create black canvas of target size
+        canvas = np.zeros((self.target_height, self.target_width, 3), dtype=np.uint8)
+        
+        # Calculate padding offsets to center the image
+        y_offset = (self.target_height - new_height) // 2
+        x_offset = (self.target_width - new_width) // 2
+        
+        # Place resized image on canvas
+        canvas[y_offset:y_offset + new_height, x_offset:x_offset + new_width] = resized
+        
+        return canvas
+    
+    def _convert_to_grayscale(self, img):
+        """Convert image to grayscale"""
+        if len(img.shape) == 3:
+            return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        return img
+    
+    def _reduce_noise(self, img):
+        """
+        Apply bilateral filtering for noise reduction
+        Preserves edges while smoothing noise
+        """
+        # Bilateral filter: d=9, sigmaColor=75, sigmaSpace=75
+        denoised = cv2.bilateralFilter(img, d=9, sigmaColor=75, sigmaSpace=75)
+        return denoised
+    
+    def _enhance_contrast(self, img):
+        """
+        Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        Enhances local contrast without amplifying noise
+        """
+        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+        enhanced = clahe.apply(img)
+        return enhanced
+    
+    def _enhance_ridges(self, img):
+        """
+        Apply Gabor filter for fingerprint ridge enhancement
+        Enhances ridge patterns at multiple orientations
+        """
+        # Gabor filter parameters optimized for fingerprints
+        ksize = 32  # Kernel size
+        sigma = 4.5  # Standard deviation
+        lambd = 9   # Wavelength
+        gamma = 0.5  # Aspect ratio
+        
+        # Apply Gabor filters at multiple orientations and combine
+        enhanced = np.zeros_like(img, dtype=np.float32)
+        
+        # Use 4 orientations: 0°, 45°, 90°, 135°
+        for theta in [0, np.pi/4, np.pi/2, 3*np.pi/4]:
+            kernel = cv2.getGaborKernel(
+                (ksize, ksize), sigma, theta, lambd, gamma, 0, ktype=cv2.CV_32F
+            )
+            filtered = cv2.filter2D(img, cv2.CV_32F, kernel)
+            enhanced += filtered
+        
+        # Normalize and convert back to uint8
+        enhanced = np.clip(enhanced / 4.0, 0, 255).astype(np.uint8)
+        
+        return enhanced
+    
+    def _apply_adaptive_threshold(self, img):
+        """
+        Apply adaptive thresholding to create binary image
+        Improves ridge clarity by adjusting threshold locally
+        """
+        binary = cv2.adaptiveThreshold(
+            img,
+            maxValue=255,
+            adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            thresholdType=cv2.THRESH_BINARY,
+            blockSize=15,  # Size of pixel neighborhood
+            C=3           # Constant subtracted from mean
+        )
+        return binary
+    
+    def _morphological_cleanup(self, img):
+        """
+        Apply morphological operations to clean up binary image
+        Removes small artifacts and closes gaps
+        """
+        # Create elliptical structuring element
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        
+        # Apply morphological opening (erosion followed by dilation)
+        # Removes small noise
+        opened = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel, iterations=1)
+        
+        # Apply morphological closing (dilation followed by erosion)
+        # Closes small gaps in ridges
+        closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel, iterations=1)
+        
+        return closed
+    
+    def _normalize_image(self, img):
+        """
+        Normalize image to [0, 1] range as float32
+        Ensures consistent input scale for ML models
+        """
+        # Convert to float32 and normalize to [0, 1]
+        normalized = img.astype(np.float32) / 255.0
+        
+        return normalized
 
-        # Convert to uint8
-        sure_fg = sure_fg.astype(np.uint8)
+
+# # Example usage
+# if __name__ == "__main__":
+#     # Initialize preprocessor
+#     preprocessor = ImageProcessor(target_size=(128, 128))
+    
+#     # Process a single image
+#     try:
+#         processed_image = preprocessor.preprocess_fingerprint("sample_fingerprint.jpg")
+#         print(f"Preprocessing successful!")
+#         print(f"Output shape: {processed_image.shape}")
+#         print(f"Output dtype: {processed_image.dtype}")
+#         print(f"Value range: [{processed_image.min():.3f}, {processed_image.max():.3f}]")
         
-        return sure_fg
+#         # Optional: Save processed image for visualization
+#         cv2.imwrite("processed_fingerprint.jpg", (processed_image * 255).astype(np.uint8))
+        
+#     except Exception as e:
+#         print(f"Error: {e}")
