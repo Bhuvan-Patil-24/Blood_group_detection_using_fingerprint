@@ -2,7 +2,7 @@ import os
 import numpy as np
 from flask import Flask, request, jsonify, render_template, flash, redirect, url_for
 from flask_mail import Mail, Message
-from model.model import BloodGroupModel
+from model.model import BloodGroupCNN
 import secrets
 import logging
 from dotenv import load_dotenv
@@ -69,7 +69,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
 # Initialize extensions
 mail = Mail(app)
-model = BloodGroupModel()
+model = BloodGroupCNN()
 
 # Load the trained model
 MODEL_PATH = 'saved_models/blood_group_model.h5'
