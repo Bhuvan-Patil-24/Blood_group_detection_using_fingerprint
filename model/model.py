@@ -6,7 +6,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 
-class BloodGroupModel:
+class BloodGroupCNN:
     def __init__(self):
         self.model = None
         self.img_height = 128

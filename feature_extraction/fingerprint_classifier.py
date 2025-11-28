@@ -4,7 +4,7 @@ Binary classification: Fingerprint vs Non-Fingerprint
 """
 
 import numpy as np
-import joblib, cv2
+import joblib
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
