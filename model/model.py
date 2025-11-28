@@ -1,81 +1,271 @@
+"""
+CNN Model Architecture for Blood Group Classification
+Merged version combining your working model with enhanced features
+Predicts 8 blood groups: A+, A-, B+, B-, O+, O-, AB+, AB-
+"""
+
 import os
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
+from pathlib import Path
+
 
 class BloodGroupCNN:
-    def __init__(self):
-        self.model = None
-        self.img_height = 128
-        self.img_width = 128
-        self.class_names = []
+    """
+    Convolutional Neural Network for blood group classification from fingerprints
+    Compatible with both grayscale (1 channel) and RGB (3 channels) images
+    """
     
-    def build_model(self, num_classes):
-        """Build a simplified CNN model for blood group classification"""
+    def __init__(self, input_shape=None, num_classes=8):
+        """
+        Initialize CNN model
+        
+        Args:
+            input_shape (tuple): Input image dimensions (height, width, channels)
+                               If None, will be auto-detected based on input data
+            num_classes (int): Number of blood group classes (default: 8)
+        """
+        # Support both old and new initialization
+        if input_shape is None:
+            # Default to grayscale for pipeline compatibility
+            self.input_shape = (128, 128, 1)
+        else:
+            self.input_shape = input_shape
+            
+        self.img_height = self.input_shape[0]
+        self.img_width = self.input_shape[1]
+        self.num_classes = num_classes
+        self.model = None
+        
+        # Standard blood group labels
+        self.blood_groups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
+        self.class_names = self.blood_groups  # Alias for compatibility
+        self.is_trained = False
+        
+    def build_model(self, num_classes=None):
+        """
+        Build CNN architecture - optimized and simplified for stability
+        Compatible with both training methods
+        
+        Args:
+            num_classes (int): Number of classes (optional, uses self.num_classes if not provided)
+        """
+        if num_classes is not None:
+            self.num_classes = num_classes
+            
         print("Building model architecture...")
         
-        # Create a sequential model - simpler architecture to avoid TensorFlow bugs
-        self.model = Sequential([
-            # Input layer implicitly defined by the first layer's input_shape
-            
-            # First convolutional block - simplified
-            Conv2D(16, (3, 3), activation='relu', padding='same', input_shape=(self.img_height, self.img_width, 3)),
-            BatchNormalization(),
-            MaxPooling2D(pool_size=(2, 2)),
-            
-            # Second convolutional block - simplified
-            Conv2D(32, (3, 3), activation='relu', padding='same'),
-            BatchNormalization(),
-            MaxPooling2D(pool_size=(2, 2)),
-            
-            # Third convolutional block - simplified
-            Conv2D(64, (3, 3), activation='relu', padding='same'),
-            BatchNormalization(),
-            MaxPooling2D(pool_size=(2, 2)),
-            
-            # Flatten the output for dense layers
-            Flatten(),
-            
-            # Dense layers - simplified
-            Dense(128, activation='relu'),
-            BatchNormalization(),
-            Dropout(0.3),
-            
-            # Output layer
-            Dense(num_classes, activation='softmax')
-        ])
+        model = Sequential(name='BloodGroup_CNN')
         
-        # Compile model
+        # Block 1: Initial feature extraction
+        model.add(Conv2D(32, (3, 3), activation='relu', 
+                        padding='same', input_shape=self.input_shape))
+        model.add(BatchNormalization())
+        model.add(Conv2D(32, (3, 3), activation='relu', padding='same'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D((2, 2)))
+        model.add(Dropout(0.25))
+        
+        # Block 2: Deeper feature extraction
+        model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+        model.add(BatchNormalization())
+        model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D((2, 2)))
+        model.add(Dropout(0.25))
+        
+        # Block 3: High-level features
+        model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+        model.add(BatchNormalization())
+        model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D((2, 2)))
+        model.add(Dropout(0.3))
+        
+        # Block 4: Complex pattern recognition
+        model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D((2, 2)))
+        model.add(Dropout(0.4))
+        
+        # Flatten and dense layers
+        model.add(Flatten())
+        model.add(Dense(512, activation='relu'))
+        model.add(BatchNormalization())
+        model.add(Dropout(0.5))
+        
+        model.add(Dense(256, activation='relu'))
+        model.add(BatchNormalization())
+        model.add(Dropout(0.5))
+        
+        # Output layer with softmax
+        model.add(Dense(self.num_classes, activation='softmax'))
+        
+        self.model = model
+        print(f"✓ Model built with {self.model.count_params():,} parameters")
+        
+        return model
+    
+    def compile_model(self, learning_rate=0.0001):
+        """
+        Compile model with optimizer and loss function
+        
+        Args:
+            learning_rate (float): Initial learning rate
+        """
+        if self.model is None:
+            self.build_model()
+        
         self.model.compile(
-            optimizer=Adam(learning_rate=0.0001),
-            loss='sparse_categorical_crossentropy',
+            optimizer=Adam(learning_rate=learning_rate),
+            loss='sparse_categorical_crossentropy',  # Works with both sparse and categorical
             metrics=['accuracy']
         )
         
-        return self.model
+        print("✓ Model compiled successfully")
+        print(f"  Total parameters: {self.model.count_params():,}")
     
-    def train(self, dataset_path, epochs=50, batch_size=32, validation_data_path=None):
-        """Train the model using the provided dataset"""
+    def train(self, X_train=None, y_train=None, X_val=None, y_val=None,
+              dataset_path=None, validation_data_path=None,
+              epochs=50, batch_size=32, output_model='saved_models/bloodgroup_cnn.h5'):
+        """
+        Train the CNN model - supports both methods:
+        1. Direct numpy arrays (X_train, y_train, X_val, y_val)
+        2. Directory-based training (dataset_path)
+        
+        Args:
+            X_train (np.ndarray): Training images (optional)
+            y_train (np.ndarray): Training labels (optional)
+            X_val (np.ndarray): Validation images (optional)
+            y_val (np.ndarray): Validation labels (optional)
+            dataset_path (str): Path to dataset directory (optional)
+            validation_data_path (str): Path to validation directory (optional)
+            epochs (int): Maximum training epochs
+            batch_size (int): Batch size
+            output_model (str): Path to save best model
+            
+        Returns:
+            keras.callbacks.History: Training history
+        """
+        print("\n" + "=" * 70)
+        print("CNN TRAINING - BLOOD GROUP CLASSIFICATION")
+        print("=" * 70)
+        
+        # Create output directory
+        os.makedirs(os.path.dirname(output_model) if os.path.dirname(output_model) else '.', exist_ok=True)
+        
+        # Method 1: Direct numpy array training (for pipeline integration)
+        if X_train is not None and y_train is not None:
+            return self._train_from_arrays(X_train, y_train, X_val, y_val, 
+                                          epochs, batch_size, output_model)
+        
+        # Method 2: Directory-based training (for your existing workflow)
+        elif dataset_path is not None:
+            return self._train_from_directory(dataset_path, validation_data_path,
+                                             epochs, batch_size, output_model)
+        
+        else:
+            raise ValueError("Provide either (X_train, y_train) or dataset_path")
+    
+    def _train_from_arrays(self, X_train, y_train, X_val, y_val,
+                          epochs, batch_size, output_model):
+        """Train from numpy arrays (new pipeline method)"""
+        if self.model is None:
+            self.compile_model()
+        
+        print(f"\nTraining Configuration:")
+        print(f"  Training samples: {len(X_train)}")
+        print(f"  Validation samples: {len(X_val) if X_val is not None else 'N/A'}")
+        print(f"  Batch size: {batch_size}")
+        print(f"  Max epochs: {epochs}")
+        print(f"  Blood groups: {', '.join(self.blood_groups)}")
+        
+        # Handle different label formats
+        if len(y_train.shape) > 1 and y_train.shape[1] > 1:
+            # One-hot encoded - convert to sparse
+            y_train = np.argmax(y_train, axis=1)
+            if y_val is not None:
+                y_val = np.argmax(y_val, axis=1)
+            # Change loss function
+            self.model.compile(
+                optimizer=Adam(learning_rate=0.0001),
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy']
+            )
+        
+        # Callbacks
+        callbacks = [
+            EarlyStopping(
+                monitor='val_loss' if X_val is not None else 'loss',
+                patience=10,
+                restore_best_weights=True,
+                verbose=1
+            ),
+            ReduceLROnPlateau(
+                monitor='val_loss' if X_val is not None else 'loss',
+                factor=0.5,
+                patience=5,
+                min_lr=1e-7,
+                verbose=1
+            ),
+            ModelCheckpoint(
+                output_model,
+                monitor='val_accuracy' if X_val is not None else 'accuracy',
+                save_best_only=True,
+                verbose=1
+            )
+        ]
+        
+        # Train
+        print("\nStarting training...\n")
+        history = self.model.fit(
+            X_train, y_train,
+            validation_data=(X_val, y_val) if X_val is not None else None,
+            epochs=epochs,
+            batch_size=batch_size,
+            callbacks=callbacks,
+            verbose=1
+        )
+        
+        self.is_trained = True
+        
+        # Print final results
+        print("\n" + "=" * 70)
+        print("TRAINING COMPLETE")
+        print("=" * 70)
+        if X_val is not None:
+            print(f"Best validation accuracy: {max(history.history['val_accuracy']):.4f}")
+        print(f"Final training accuracy: {history.history['accuracy'][-1]:.4f}")
+        print(f"Model saved: {output_model}")
+        
+        return history
+    
+    def _train_from_directory(self, dataset_path, validation_data_path,
+                             epochs, batch_size, output_model):
+        """Train from directory structure (your original method)"""
         print("Setting up data generators...")
+        
         try:
             # Convert dataset to tf.data.Dataset
-            train_ds = tf.keras.utils.image_dataset_from_directory(
-                dataset_path,
-                image_size=(self.img_height, self.img_width),
-                batch_size=batch_size
-            )
-            
-            # If validation path is provided, use it, otherwise use split from train data
             if validation_data_path:
+                train_ds = tf.keras.utils.image_dataset_from_directory(
+                    dataset_path,
+                    image_size=(self.img_height, self.img_width),
+                    batch_size=batch_size
+                )
                 val_ds = tf.keras.utils.image_dataset_from_directory(
                     validation_data_path,
                     image_size=(self.img_height, self.img_width),
                     batch_size=batch_size
                 )
             else:
+                # Use split from train data
                 val_ds = tf.keras.utils.image_dataset_from_directory(
                     dataset_path,
                     validation_split=0.2,
@@ -84,7 +274,6 @@ class BloodGroupCNN:
                     image_size=(self.img_height, self.img_width),
                     batch_size=batch_size
                 )
-                
                 train_ds = tf.keras.utils.image_dataset_from_directory(
                     dataset_path,
                     validation_split=0.2,
@@ -96,52 +285,61 @@ class BloodGroupCNN:
             
             # Get class names
             self.class_names = train_ds.class_names
+            self.blood_groups = self.class_names
             print(f"Found classes: {self.class_names}")
             
             # Configure datasets for performance
             AUTOTUNE = tf.data.AUTOTUNE
             
-            # Convert data types and normalize
             def preprocess(image, label):
                 image = tf.cast(image, tf.float32) / 255.0
                 return image, label
             
             train_ds = train_ds.map(preprocess, num_parallel_calls=AUTOTUNE)
             val_ds = val_ds.map(preprocess, num_parallel_calls=AUTOTUNE)
-            
-            # Enable prefetching
             train_ds = train_ds.prefetch(buffer_size=AUTOTUNE)
             val_ds = val_ds.prefetch(buffer_size=AUTOTUNE)
             
-            # Build model if not already built
+            # Build model if needed
             if self.model is None:
-                print("Building model architecture...")
+                # Auto-detect channels from dataset
+                for images, labels in train_ds.take(1):
+                    detected_shape = images.shape[1:]
+                    if detected_shape != self.input_shape:
+                        print(f"Auto-adjusting input shape from {self.input_shape} to {detected_shape}")
+                        self.input_shape = detected_shape
+                
                 self.build_model(len(self.class_names))
+                self.compile_model()
             
-            # Create directories if they don't exist
-            os.makedirs('saved_models', exist_ok=True)
-            os.makedirs('checkpoints', exist_ok=True)
-            
-            print(f"Training configuration:")
+            print(f"\nTraining configuration:")
             print(f"- Batch size: {batch_size}")
             print(f"- Epochs: {epochs}")
             
-            # Callbacks for training
+            # Callbacks
             callbacks = [
                 EarlyStopping(
                     monitor='val_loss',
-                    patience=3,
-                    restore_best_weights=True
+                    patience=10,
+                    restore_best_weights=True,
+                    verbose=1
+                ),
+                ReduceLROnPlateau(
+                    monitor='val_loss',
+                    factor=0.5,
+                    patience=5,
+                    min_lr=1e-7,
+                    verbose=1
                 ),
                 ModelCheckpoint(
-                    'saved_models/blood_group_model.h5',
+                    output_model,
                     monitor='val_accuracy',
-                    save_best_only=True
+                    save_best_only=True,
+                    verbose=1
                 )
             ]
             
             print("\nStarting model training...")
-            # Train the model
             history = self.model.fit(
                 train_ds,
                 validation_data=val_ds,
@@ -150,67 +348,221 @@ class BloodGroupCNN:
                 verbose=1
             )
             
+            self.is_trained = True
+            
+            print("\n" + "=" * 70)
+            print("TRAINING COMPLETE")
+            print("=" * 70)
+            print(f"Best validation accuracy: {max(history.history['val_accuracy']):.4f}")
+            print(f"Model saved: {output_model}")
+            
             return history
             
         except Exception as e:
             print(f"Error in training setup: {str(e)}")
             raise
     
-    def save_model(self, path):
-        """Save the trained model"""
-        if self.model is not None:
-            # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            
-            # Save the model
-            self.model.save(path)
-            
-            # Save class names
-            np.save(os.path.join(os.path.dirname(path), 'class_names.npy'), self.class_names)
-        else:
-            raise ValueError("Model has not been built yet")
-    
-    def load_model(self, path):
-        """Load a trained model"""
-        self.model = tf.keras.models.load_model(path)
-        
-        # Load class names
-        class_names_path = os.path.join(os.path.dirname(path), 'class_names.npy')
-        if os.path.exists(class_names_path):
-            self.class_names = np.load(class_names_path, allow_pickle=True).tolist()
-    
     def predict(self, img):
-        """Predict blood group from image or file path"""
-        if self.model is None:
-            raise ValueError("Model has not been loaded or trained")
+        """
+        Predict blood group from image
+        Compatible with both file paths and numpy arrays
         
-        # Check if input is a file path
+        Args:
+            img: Either file path (str) or numpy array
+            
+        Returns:
+            tuple: (predicted_class_index, class_probabilities)
+        """
+        if self.model is None:
+            raise ValueError("Model not loaded. Call load_model() first.")
+        
+        # Handle file path input
         if isinstance(img, str):
-            # Load and preprocess the image
             try:
                 img = tf.keras.utils.load_img(
                     img, 
                     target_size=(self.img_height, self.img_width)
                 )
                 img = tf.keras.utils.img_to_array(img)
-                img = np.expand_dims(img, axis=0)
             except Exception as e:
                 raise ValueError(f"Error loading image from path: {str(e)}")
-        else:
-            # Ensure image has correct dimensions
-            if len(img.shape) == 3:  # Single image
-                img = np.expand_dims(img, axis=0)
         
-        # Normalize image
-        img = img / 255.0
+        # Prepare image dimensions
+        if img.ndim == 2:
+            # Grayscale (H, W) -> (H, W, 1)
+            img = np.expand_dims(img, axis=-1)
+        
+        if img.ndim == 3 and img.shape[-1] == 1:
+            # Single channel, might need conversion for RGB models
+            if self.input_shape[-1] == 3:
+                img = np.repeat(img, 3, axis=-1)
+        elif img.ndim == 3 and img.shape[-1] == 3:
+            # RGB, might need conversion for grayscale models
+            if self.input_shape[-1] == 1:
+                img = np.mean(img, axis=-1, keepdims=True)
+        
+        if img.ndim == 3:
+            # Add batch dimension (1, H, W, C)
+            img = np.expand_dims(img, axis=0)
+        
+        # Normalize if needed
+        if img.dtype != np.float32:
+            img = img.astype(np.float32)
+        
+        if img.max() > 1.0:
+            img = img / 255.0
         
         # Make prediction
-        prediction = self.model.predict(img)
-        predicted_class = np.argmax(prediction, axis=1)[0]
-        confidence = prediction[0][predicted_class]
+        probabilities = self.model.predict(img, verbose=0)[0]
+        predicted_class = np.argmax(probabilities)
         
-        # Check if class names are available
-        if not self.class_names or len(self.class_names) <= predicted_class:
-            return f"Class {predicted_class}", confidence
+        return predicted_class, probabilities
+    
+    def predict_blood_group(self, image):
+        """
+        Predict blood group with label and confidence
         
-        return self.class_names[predicted_class], confidence
+        Args:
+            image: Image (numpy array or file path)
+            
+        Returns:
+            dict: {'blood_group': str, 'confidence': float, 'all_probabilities': dict}
+        """
+        predicted_class, probabilities = self.predict(image)
+        
+        # Use available class names
+        class_label = (self.blood_groups[predicted_class] 
+                      if predicted_class < len(self.blood_groups) 
+                      else f"Class {predicted_class}")
+        
+        result = {
+            'blood_group': class_label,
+            'confidence': float(probabilities[predicted_class]),
+            'all_probabilities': {
+                (self.blood_groups[i] if i < len(self.blood_groups) else f"Class {i}"): 
+                float(probabilities[i]) 
+                for i in range(len(probabilities))
+            }
+        }
+        
+        return result
+    
+    def save_model(self, path):
+        """Save the trained model"""
+        if self.model is None:
+            raise ValueError("Model has not been built yet")
+        
+        # Create directory if needed
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else '.', exist_ok=True)
+        
+        # Save the model
+        self.model.save(path)
+        
+        # Save class names in same directory
+        class_names_path = os.path.join(os.path.dirname(path), 'class_names.npy')
+        np.save(class_names_path, self.blood_groups)
+        
+        print(f"✓ Model saved: {path}")
+        print(f"✓ Class names saved: {class_names_path}")
+    
+    def load_model(self, path):
+        """Load a trained model"""
+        if not Path(path).exists():
+            raise FileNotFoundError(f"Model file not found: {path}")
+        
+        self.model = tf.keras.models.load_model(path)
+        self.is_trained = True
+        
+        # Try to load class names
+        class_names_path = os.path.join(os.path.dirname(path), 'class_names.npy')
+        if os.path.exists(class_names_path):
+            self.blood_groups = np.load(class_names_path, allow_pickle=True).tolist()
+            self.class_names = self.blood_groups
+            print(f"✓ CNN model loaded from: {path}")
+            print(f"  Classes: {', '.join(self.blood_groups)}")
+        else:
+            print(f"✓ CNN model loaded from: {path}")
+            print(f"  Warning: class_names.npy not found, using default labels")
+    
+    def summary(self):
+        """Print model architecture summary"""
+        if self.model is None:
+            self.build_model()
+        
+        self.model.summary()
+
+
+# Helper function for data preparation (pipeline integration)
+def prepare_training_data(data_dir, blood_groups=['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']):
+    """
+    Prepare training data from directory structure for pipeline
+    
+    data_dir/
+    ├── A+/
+    │   ├── img1.png
+    │   └── img2.png
+    ├── A-/
+    ├── B+/
+    └── ...
+    
+    Args:
+        data_dir (str): Root directory containing blood group subdirectories
+        blood_groups (list): List of blood group labels
+        
+    Returns:
+        tuple: (X_images, y_labels, label_mapping)
+    """
+    try:
+        from preprocessing.image_processor import ImageProcessor
+        preprocessor = ImageProcessor(target_size=(128, 128))
+    except ImportError:
+        print("Warning: Could not import ImageProcessor, using basic preprocessing")
+        preprocessor = None
+    
+    images = []
+    labels = []
+    
+    data_path = Path(data_dir)
+    
+    for idx, blood_group in enumerate(blood_groups):
+        group_dir = data_path / blood_group
+        
+        if not group_dir.exists():
+            print(f"Warning: Directory not found: {group_dir}")
+            continue
+        
+        image_files = (list(group_dir.glob('*.png')) + 
+                      list(group_dir.glob('*.jpg')) + 
+                      list(group_dir.glob('*.jpeg')) + 
+                      list(group_dir.glob('*.bmp')))
+        
+        print(f"Loading {blood_group}: {len(image_files)} images")
+        
+        for img_path in image_files:
+            try:
+                if preprocessor:
+                    processed_img = preprocessor.preprocess_fingerprint(str(img_path))
+                else:
+                    # Basic preprocessing fallback
+                    import cv2
+                    img = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
+                    processed_img = cv2.resize(img, (128, 128)) / 255.0
+                
+                images.append(processed_img)
+                labels.append(idx)
+            except Exception as e:
+                print(f"  Skipped {img_path.name}: {e}")
+    
+    X = np.array(images)
+    y = np.array(labels)
+    
+    # Convert to (samples, height, width, channels)
+    if X.ndim == 3:
+        X = np.expand_dims(X, axis=-1)
+    
+    print(f"\n✓ Dataset prepared:")
+    print(f"  Total images: {len(X)}")
+    print(f"  Image shape: {X.shape}")
+    print(f"  Labels: {y.shape}")
+    
+    return X, y, blood_groups
