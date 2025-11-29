@@ -83,17 +83,17 @@ def prepare_dataset(source_path, output_path="dataset_prepared", train_ratio=0.7
     print(f"  Testing:    {test_count} images ({test_count/total_count*100:.1f}%)")
     print(f"  Total:      {total_count} images")
     
-    # Create a zip file of the prepared dataset
-    print("\nCreating zip file of the prepared dataset...")
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    zip_filename = f"blood_group_dataset_{timestamp}.zip"
+    # # Create a zip file of the prepared dataset
+    # print("\nCreating zip file of the prepared dataset...")
+    # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # zip_filename = f"blood_group_dataset_{timestamp}.zip"
     
-    with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(output_path):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, os.path.dirname(output_path))
-                zipf.write(file_path, arcname)
+    # with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    #     for root, dirs, files in os.walk(output_path):
+    #         for file in files:
+    #             file_path = os.path.join(root, file)
+    #             arcname = os.path.relpath(file_path, os.path.dirname(output_path))
+    #             zipf.write(file_path, arcname)
     
     print(f"\nDataset preparation complete!")
     print(f"Zip file created: {zip_filename}")
