@@ -13,7 +13,7 @@ warnings.filterwarnings('ignore')
 from preprocessing.image_processor import ImageProcessor
 from feature_extraction.feature_extractor import FingerprintFeatureExtractor
 from feature_extraction.fingerprint_classifier import FingerprintClassifier
-from .model.cnn_model import BloodGroupCNN
+from model.cnn_model import BloodGroupCNN
 
 
 class FingerprintBloodGroupPipeline:
@@ -26,8 +26,8 @@ class FingerprintBloodGroupPipeline:
     """
     
     def __init__(self, 
-                 validator_model_path='models/validator.joblib',
-                 cnn_model_path='models/bloodgroup_cnn.h5',
+                 validator_model_path='saved_models/fingerprint_validator.joblib',
+                 cnn_model_path='saved_models/bloodgroup_cnn.keras',
                  target_size=(128, 128),
                  confidence_threshold=0.5):
         """
@@ -116,7 +116,7 @@ class FingerprintBloodGroupPipeline:
             # Step 1: Validate input file
             print("\n[Step 1/5] Validating input file...")
             if not self._validate_input(image_path):
-                result['message'] = "Invalid image file or format"
+                result['message'] = "Invalid image file path or format"
                 print(f"  ✗ {result['message']}")
                 return result
             print("  ✓ Input file validated")

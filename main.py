@@ -2,7 +2,8 @@ import os
 import numpy as np
 from flask import Flask, request, jsonify, render_template, flash, redirect, url_for
 from flask_mail import Mail, Message
-from .model.cnn_model import BloodGroupCNN
+# from .model.cnn_model import BloodGroupCNN
+from pipeline import FingerprintBloodGroupPipeline
 import secrets
 import logging
 from dotenv import load_dotenv
@@ -68,21 +69,23 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 
 # Initialize extensions
 mail = Mail(app)
-model = BloodGroupCNN()
+pipeline  = FingerprintBloodGroupPipeline()
 
-# Load the trained model
-MODEL_PATH = 'saved_models/blood_group_model.h5'
-if os.path.exists(MODEL_PATH):
-    model.load_model(MODEL_PATH)
-    print("Model loaded successfully!")
-else:
-    print("Warning: Model not found. Please train the model first.")
+# model = BloodGroupCNN()
 
-# Try to load class names
-CLASS_NAMES_PATH = 'saved_models/class_names.npy'
-if os.path.exists(CLASS_NAMES_PATH):
-    model.class_names = np.load(CLASS_NAMES_PATH, allow_pickle=True).tolist()
-    print(f"Loaded class names: {model.class_names}")
+# # Load the trained model
+# MODEL_PATH = 'saved_models/bloodgroup_cnn.keras'
+# if os.path.exists(MODEL_PATH):
+#     model.load_model(MODEL_PATH)
+#     print("Model loaded successfully!")
+# else:
+#     print("Warning: Model not found. Please train the model first.")
+
+# # Try to load class names
+# CLASS_NAMES_PATH = 'saved_models/class_names.npy'
+# if os.path.exists(CLASS_NAMES_PATH):
+#     model.class_names = np.load(CLASS_NAMES_PATH, allow_pickle=True).tolist()
+#     print(f"Loaded class names: {model.class_names}")
 
 # Authentication routes
 @app.route('/login', methods=['GET', 'POST'])
@@ -286,8 +289,19 @@ def predict():
         
         logger.info(f"Saved uploaded image to: {temp_path}")
         
-        # Make prediction directly using the image
-        blood_group, confidence = model.predict(temp_path)
+        # # Make prediction directly using the image
+        # blood_group, confidence = model.predict(temp_path)
+
+        result = pipeline.predict(temp_path, return_detailed=False)
+
+        # Pipeline FAILED case
+        if not result.get("status", False):
+            logger.error(f"Pipeline prediction failed: {result.get('message')}")
+            return jsonify({"error": result.get("message", "Unknown Error")}), 400
+
+        # Extract values from pipeline result
+        blood_group = result["blood_group"]
+        confidence = float(result["confidence"])
         
         # Store path relative to static folder
         relative_path = 'uploads/' + unique_filename
@@ -306,7 +320,7 @@ def predict():
         
         return jsonify({
             'blood_group': blood_group,
-            'confidence': float(confidence)
+            'confidence': confidence
         })
     
     except Exception as e:

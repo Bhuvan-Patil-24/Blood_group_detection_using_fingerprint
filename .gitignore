@@ -29,7 +29,7 @@ ENV/
 .venv
 env.bak/
 venv.bak/
-demo.py
+test.py
 # IDE
 .idea/
 .vscode/
