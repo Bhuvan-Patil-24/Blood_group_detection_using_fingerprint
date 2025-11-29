@@ -7,8 +7,6 @@ Predicts 8 blood groups: A+, A-, B+, B-, O+, O-, AB+, AB-
 import os
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers, models
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
@@ -257,12 +255,14 @@ class BloodGroupCNN:
                 train_ds = tf.keras.utils.image_dataset_from_directory(
                     dataset_path,
                     image_size=(self.img_height, self.img_width),
-                    batch_size=batch_size
+                    batch_size=batch_size,
+                    color_mode="grayscale"
                 )
                 val_ds = tf.keras.utils.image_dataset_from_directory(
                     validation_data_path,
                     image_size=(self.img_height, self.img_width),
-                    batch_size=batch_size
+                    batch_size=batch_size,
+                    color_mode="grayscale"
                 )
             else:
                 # Use split from train data
@@ -272,7 +272,8 @@ class BloodGroupCNN:
                     subset="validation",
                     seed=123,
                     image_size=(self.img_height, self.img_width),
-                    batch_size=batch_size
+                    batch_size=batch_size,
+                    color_mode="grayscale"
                 )
                 train_ds = tf.keras.utils.image_dataset_from_directory(
                     dataset_path,
@@ -280,7 +281,8 @@ class BloodGroupCNN:
                     subset="training",
                     seed=123,
                     image_size=(self.img_height, self.img_width),
-                    batch_size=batch_size
+                    batch_size=batch_size,
+                    color_mode="grayscale"
                 )
             
             # Get class names

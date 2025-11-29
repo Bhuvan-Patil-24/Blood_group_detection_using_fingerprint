@@ -13,7 +13,7 @@ warnings.filterwarnings('ignore')
 from preprocessing.image_processor import ImageProcessor
 from feature_extraction.feature_extractor import FingerprintFeatureExtractor
 from feature_extraction.fingerprint_classifier import FingerprintClassifier
-from model.model import BloodGroupCNN
+from .model.cnn_model import BloodGroupCNN
 
 
 class FingerprintBloodGroupPipeline:
