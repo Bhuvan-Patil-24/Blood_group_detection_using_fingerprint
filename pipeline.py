@@ -14,6 +14,7 @@ from preprocessing.image_processor import ImageProcessor
 from feature_extraction.feature_extractor import FingerprintFeatureExtractor
 from feature_extraction.fingerprint_classifier import FingerprintClassifier
 from model.cnn_model import BloodGroupCNN
+# from model.resNet_model import BloodGroupResNet50
 
 
 class FingerprintBloodGroupPipeline:
@@ -70,6 +71,7 @@ class FingerprintBloodGroupPipeline:
         # Load CNN model
         print("\n[4/4] Loading Blood Group CNN Model...")
         self.cnn = BloodGroupCNN(input_shape=(target_size[0], target_size[1], 1))
+        # self.cnn = BloodGroupResNet50(input_shape=(224,224,3))
         try:
             self.cnn.load_model(cnn_model_path)
             print(f"  ✓ CNN loaded successfully")

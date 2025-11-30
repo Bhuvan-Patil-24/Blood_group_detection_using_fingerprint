@@ -131,7 +131,7 @@ class BloodGroupCNN:
     
     def train(self, X_train=None, y_train=None, X_val=None, y_val=None,
               dataset_path=None, validation_data_path=None,
-              epochs=50, batch_size=32, output_model='saved_models/bloodgroup_cnn.h5'):
+              epochs=50, batch_size=32, output_model='saved_models/bloodgroup_cnn_new.keras'):
         """
         Train the CNN model - supports both methods:
         1. Direct numpy arrays (X_train, y_train, X_val, y_val)
