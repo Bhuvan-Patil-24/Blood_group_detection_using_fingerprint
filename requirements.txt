@@ -6,11 +6,13 @@ Werkzeug==3.0.1
 opencv-python==4.9.0.80
 numpy==1.26.4
 Pillow==10.2.0
+scikit-image==0.25.2
 
 # Machine Learning and Deep Learning
 tensorflow==2.16.1
 scikit-learn==1.6.1
 pandas==2.2.1
+scipy==1.15.3
 
 # Database
 SQLAlchemy==2.0.25
@@ -37,3 +39,5 @@ python-magic==0.4.27
 
 # Additional
 Flask-Mail==0.9.1
+matplotlib==3.10.7
+seaborn==0.13.2
