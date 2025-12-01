@@ -31,6 +31,7 @@ Blood_group_detection_using_fingerprint/
 ├── main.py # Flask application entry file
 ├── pipeline.py
 ├── api_routes.py
+├── .env
 ├── .gitignore
 ├── requirements.txt
 ├── README.md
