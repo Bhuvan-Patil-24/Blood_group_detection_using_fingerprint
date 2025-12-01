@@ -1,7 +1,7 @@
 # 🩸 Blood Group Detection Using Fingerprint
 
 A deep learning and computer vision-based system for predicting human blood groups using fingerprint images.  
-This project uses image preprocessing, feature extraction, and CNN/ResNet-based classification to accurately identify blood groups from fingerprint ridge patterns.
+This project uses image preprocessing, feature extraction, and CNN to accurately identify blood groups from fingerprint ridge patterns.
 
 ---
 
@@ -10,16 +10,14 @@ This project uses image preprocessing, feature extraction, and CNN/ResNet-based 
 - **Fingerprint Image Preprocessing**
   - Noise removal, normalization, ridge enhancement, orientation correction
 - **Feature Extraction**
-  - GLCM, LBP, Texture descriptors (optional hybrid model support)
+  - HOG, LBP, Texture descriptors (optional hybrid model support)
 - **Deep Learning Classification**
-  - Custom CNN + ResNet50 classifier trained on ~6000 samples
+  - Custom Deepn CNN trained on ~6000 samples
 - **High Evaluation Performance**
   - Achieved **80.01% accuracy**, **99.10% Top-3 Accuracy**
   - Includes ROC-AUC, confusion matrix, error analysis, and misclassification visualization
 - **Interactive Web Interface (Flask Based)**
   - Image upload, real-time prediction, confidence score display
-- **Admin Dashboard**
-  - View statistics, performance, prediction history, model training
 - **SQLite Database Integration**
 
 ---
