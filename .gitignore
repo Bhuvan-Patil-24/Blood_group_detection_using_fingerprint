@@ -27,6 +27,7 @@ env/
 ENV/
 .env
 .venv
+evaluation_results/
 env.bak/
 venv.bak/
 test.py
