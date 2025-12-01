@@ -162,19 +162,19 @@ python main.py
 
 ## 🏁 Authors & Credits
 
-Bhuvan Patil, Aniket Mishra, Prantik Deodhagale, Dhanshri Supratkar, Vishakha Padole
+Bhuvan Patil, Aniket Mishra, Prantik Deodhagale, Dhanshri Supratkar, Vishakha Padole  
 Final Year Project - SBJITMR 2025
 
 --- 
 
 ## 📜 License
 
-This project is for educational and research purposes only.
+This project is for educational and research purposes only.  
 Unauthorized commercial use is prohibited.
 
 ---
 
 ## ⭐ Support
 
-If this project helped you, leave a star on the repository 🤝
+If this project helped you, leave a star on the repository 🤝  
 For queries, feature suggestions, or collaborations: contact personally
