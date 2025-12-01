@@ -29,6 +29,9 @@ This project uses image preprocessing, feature extraction, and CNN/ResNet-based 
 Blood_group_detection_using_fingerprint/
 │
 ├── main.py # Flask application entry file
+├── pipeline.py
+├── api_routes.py
+├── .gitignore
 ├── requirements.txt
 ├── README.md
 │
@@ -36,28 +39,41 @@ Blood_group_detection_using_fingerprint/
 │ ├── cnn_model.py # CNN architecture + training utilities
 │ ├── resNet_model.py # ResNet-based training module
 │ ├── train.py # Training script
-│ ├── evaluate.py # Complete evaluation & visualization
-│ └── saved_models/
-│ └── bloodgroup_cnn.keras # Trained model file
+│ └── evaluate.py # Complete evaluation & visualization
 │
+├── saved_models/
+| ├── fingerprint_validator.joblib
+| ├── class_names.npy
+| └── bloodgroup_cnn.keras
+|
 ├── preprocessing/
 │ └── image_processor.py # Image cleaning & enhancement
 │
 ├── feature_extraction/
+| ├── fingerprint_classifier.py
 │ └── feature_extractor.py # Texture feature extraction
 │
 ├── static/ # Assets & saved images/graphs
 ├── templates/
-│ ├── index.html # Main UI interface
+│ ├── about.html # Main UI interface
+│ ├── base.html
+│ ├── contact.html
+│ ├── login.html
+│ ├── profile.html
+│ ├── register.html
+│ ├── results.html
+│ ├── upload.html
 │ └── admin.html # Admin dashboard
 │
 ├── database/
+│ ├── migrate_db.py
+│ ├── models.py
 │ └── db_manager.py # SQLite storage operations
 │
 └── dataset_prepared/ # Dataset (train/val/test folders)
-├── train/
-├── validation/
-└── test/
+| ├── train/
+| ├── validation/
+| └── test/
 ```
 
 ---
