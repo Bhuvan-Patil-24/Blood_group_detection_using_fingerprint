@@ -25,7 +25,7 @@ This project uses image preprocessing, feature extraction, and CNN/ResNet-based 
 ---
 
 ## 📁 Project Structure
-
+```bash
 Blood_group_detection_using_fingerprint/
 │
 ├── main.py # Flask application entry file
@@ -58,7 +58,7 @@ Blood_group_detection_using_fingerprint/
 ├── train/
 ├── validation/
 └── test/
-
+```
 
 ---
 
