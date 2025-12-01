@@ -91,7 +91,7 @@ python model/evaluate.py
 ---
 
 ### 📉 Confusion Matrix Result
-
+```bash
       A+   A-  AB+  AB-   B+   B-   O+   O-
 A+   173    0   26    1    0    0   18   65
 A-     0  342    9   88   13   11    5   37
@@ -101,7 +101,7 @@ B+     0    2    7    9  309    0    0    0
 B-     0   10    0   29   11  319    0    2
 O+     2   12   11   24    0    0  235  143
 O-     0    0    5   10    1    0    0  341
-
+```
 ---
 
 ## 🔧 System Requirements
@@ -165,12 +165,16 @@ python main.py
 Bhuvan Patil, Aniket Mishra, Prantik Deodhagale, Dhanshri Supratkar, Vishakha Padole
 Final Year Project - SBJITMR 2025
 
-### 📜 License
+--- 
+
+## 📜 License
 
 This project is for educational and research purposes only.
 Unauthorized commercial use is prohibited.
 
-### ⭐ Support
+---
+
+## ⭐ Support
 
 If this project helped you, leave a star on the repository 🤝
 For queries, feature suggestions, or collaborations: contact personally
