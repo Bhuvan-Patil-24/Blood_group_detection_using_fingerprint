@@ -1,193 +1,176 @@
-# Blood Group Detection Using Fingerprint
+# 🩸 Blood Group Detection Using Fingerprint
 
-A machine learning-based system that predicts blood groups from fingerprint images using deep learning and image processing techniques.
+A deep learning and computer vision-based system for predicting human blood groups using fingerprint images.  
+This project uses image preprocessing, feature extraction, and CNN/ResNet-based classification to accurately identify blood groups from fingerprint ridge patterns.
 
-## Features
+---
 
-- **Fingerprint Analysis**: Upload and analyze fingerprint images
-- **Blood Group Prediction**: Accurate prediction of blood groups with confidence scores
-- **Admin Dashboard**: Monitor system performance and manage models
-- **Database Integration**: Track and store prediction history
-- **Interactive UI**: User-friendly interface for both users and administrators
+## 🚀 Key Features
 
-## Prerequisites
+- **Fingerprint Image Preprocessing**
+  - Noise removal, normalization, ridge enhancement, orientation correction
+- **Feature Extraction**
+  - GLCM, LBP, Texture descriptors (optional hybrid model support)
+- **Deep Learning Classification**
+  - Custom CNN + ResNet50 classifier trained on ~6000 samples
+- **High Evaluation Performance**
+  - Achieved **80.01% accuracy**, **99.10% Top-3 Accuracy**
+  - Includes ROC-AUC, confusion matrix, error analysis, and misclassification visualization
+- **Interactive Web Interface (Flask Based)**
+  - Image upload, real-time prediction, confidence score display
+- **Admin Dashboard**
+  - View statistics, performance, prediction history, model training
+- **SQLite Database Integration**
 
-- Python 3.10 or later
-- Windows/Linux/MacOS
-- Git (optional)
-- 4GB RAM minimum (8GB recommended)
-- Webcam (optional, for real-time capture)
+---
 
-## Installation
+## 📁 Project Structure
 
-1. **Clone the Repository** (if using Git):
-   ```bash
-   git clone <repository-url>
-   cd Blood_group_detection_using_fingerprint
-   ```
-
-2. **Set Up Python Virtual Environment**:
-
-   For Windows:
-   ```powershell
-   # Open PowerShell as Administrator first and run:
-   Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-   # Create virtual environment
-   python -m venv venv
-
-   # Activate virtual environment
-   .\venv\Scripts\activate
-   ```
-
-   For Linux/MacOS:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Project Structure
-
-```
 Blood_group_detection_using_fingerprint/
-├── main.py                 # Main Flask application
-├── api_routes.py          # API endpoints for admin dashboard
-├── requirements.txt       # Project dependencies
-├── README.md             # Project documentation
-├── templates/            # HTML templates
-│   ├── index.html       # Main application interface
-│   └── admin.html       # Admin dashboard interface
-├── model/               # Model-related code
-│   └── model.py        # BloodGroupModel implementation
-├── preprocessing/       # Image processing
-│   └── image_processor.py
-├── feature_extraction/ # Feature extraction
-│   └── feature_extractor.py
-├── database/          # Database operations
-│   └── db_manager.py
-├── saved_models/      # Trained model storage
-│   └── blood_group_model.h5
-└── dataset_blood_group/  # Training dataset
-    ├── A+/
-    ├── A-/
-    ├── B+/
-    └── ...
+│
+├── main.py # Flask application entry file
+├── requirements.txt
+├── README.md
+│
+├── model/
+│ ├── cnn_model.py # CNN architecture + training utilities
+│ ├── resNet_model.py # ResNet-based training module
+│ ├── train.py # Training script
+│ ├── evaluate.py # Complete evaluation & visualization
+│ └── saved_models/
+│ └── bloodgroup_cnn.keras # Trained model file
+│
+├── preprocessing/
+│ └── image_processor.py # Image cleaning & enhancement
+│
+├── feature_extraction/
+│ └── feature_extractor.py # Texture feature extraction
+│
+├── static/ # Assets & saved images/graphs
+├── templates/
+│ ├── index.html # Main UI interface
+│ └── admin.html # Admin dashboard
+│
+├── database/
+│ └── db_manager.py # SQLite storage operations
+│
+└── dataset_prepared/ # Dataset (train/val/test folders)
+├── train/
+├── validation/
+└── test/
+
+
+---
+
+## 🧠 Model Training Workflow
+
+Fingerprint Image ➜ Preprocessing ➜ Feature Extraction ➜ CNN  ➜ Prediction
+
+
+### 🖥 Model Training (Example)
+
+```bash
+python model/train.py
 ```
 
-## Configuration
+### 🖥 Model Evaluation (Example)
 
-1. **Database Setup**:
-   - SQLite database will be automatically created on first run
-   - Located at `blood_groups.db` in project root
-   - No additional configuration needed
-
-2. **Model Setup**:
-   - Default model path: `saved_models/blood_group_model.h5`
-   - Will be created after first training session
-   - Can be replaced with pre-trained model
-
-## Running the Application
-
-1. **Start the Server**:
-   ```bash
-   python main.py
-   ```
-
-2. **Access the Application**:
-   - Main Interface: `http://localhost:5000`
-   - Admin Dashboard: `http://localhost:5000/admin`
-
-## Usage Guide
-
-### Main Interface
-1. Upload fingerprint image using the upload button
-2. Wait for processing and analysis
-3. View predicted blood group and confidence score
-4. Results are automatically saved to database
-
-### Admin Dashboard
-1. View system statistics and predictions
-2. Monitor blood group distribution
-3. Track prediction confidence levels
-4. Train new models with custom parameters
-5. Download trained models for backup
-
-### Training New Models
-1. Access the admin dashboard
-2. Navigate to "Model Management"
-3. Configure training parameters:
-   - Dataset path
-   - Number of epochs
-   - Batch size
-4. Click "Train Model" and monitor progress
-5. New model will automatically be saved and used
-
-## API Endpoints
-
-- `/api/stats` - Get system statistics
-- `/api/predictions` - Get recent predictions
-- `/api/model-info` - Get current model information
-- `/predict` - Make new prediction
-- `/train` - Train new model
-
-## Dependencies
-
-```
-# Web Framework
-flask==2.3.3
-
-# Machine Learning and Data Processing
-tensorflow==2.16.1
-numpy==1.24.3
-pandas==2.0.3
-scikit-image==0.21.0
-scikit-learn==1.3.0
-
-# Image Processing
-opencv-python==4.8.0.76
-Pillow==10.0.1
-
-# Database
-SQLAlchemy==2.0.23
-
-# Utilities
-matplotlib==3.7.3
-tqdm==4.66.1
+```bash
+python model/evaluate.py
 ```
 
-## Troubleshooting
+---
 
-1. **Virtual Environment Issues**:
-   - Ensure Python 3.10 or later is installed
-   - Run PowerShell as Administrator for Windows
-   - Check execution policy settings
+## 🧪 Dataset Details
 
-2. **Package Installation Errors**:
-   - If TensorFlow fails: Try `pip install tensorflow-cpu`
-   - If OpenCV fails: Try `pip install opencv-python-headless`
-   - Update pip: `python -m pip install --upgrade pip`
+- Total images: ~6000
+- 8 blood group classes: A+, A-, B+, B-, AB+, AB-, O+, O-
+- Image resolution: 128×128 grayscale
+- Data split Strategy: 70% train — 15% validation — 15% test
 
-3. **Runtime Errors**:
-   - Check if model file exists
-   - Verify dataset structure
-   - Ensure database permissions
-   - Check disk space for model training
+---
 
-4. **Performance Issues**:
-   - Close unnecessary applications
-   - Monitor system resources
-   - Consider using GPU for training
-   - Reduce batch size if needed
+### 📉 Confusion Matrix Result
 
-## Contributing
+      A+   A-  AB+  AB-   B+   B-   O+   O-
+A+   173    0   26    1    0    0   18   65
+A-     0  342    9   88   13   11    5   37
+AB+    0    1  316    0   14    0    1   23
+AB-    0    0    1  370    1    1    0    8
+B+     0    2    7    9  309    0    0    0
+B-     0   10    0   29   11  319    0    2
+O+     2   12   11   24    0    0  235  143
+O-     0    0    5   10    1    0    0  341
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+---
+
+## 🔧 System Requirements
+
+### Recommended Hardware
+
+| Component | Requirement                                |
+| --------- | ------------------------------------------ |
+| RAM       | 8GB (16GB recommended)                     |
+| GPU       | NVIDIA RTX 3050 / CUDA support recommended |
+| Storage   | 5–10GB free                                |
+
+### Software Requirements
+
+- Python 3.10  (Mandatory)
+- TensorFlow 2.16.1
+- CUDA / cuDNN (optional for GPU)
+
+---
+
+## 📦 Setup & Installation
+
+```bash
+# Clone project
+git clone <repo-url>
+cd Blood_group_detection_using_fingerprint
+
+# Create virtual environment
+python -m venv venv
+.\venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/Mac
+
+# Install requirements
+pip install -r requirements.txt
+```
+
+---
+
+## 🖼 Usage
+
+### Start Application
+
+```bash
+python main.py
+```
+
+---
+
+## 🔮 Future Scope
+
+- Integration with biometric systems
+- Mobile application
+- Real-time capture from fingerprint sensor hardware
+- Hybrid CNN-Transformer architecture
+- Deployment on cloud for public access
+
+---
+
+## 🏁 Authors & Credits
+
+Bhuvan Patil, Aniket Mishra, Prantik Deodhagale, Dhanshri Supratkar, Vishakha Padole
+Final Year Project - SBJITMR 2025
+
+### 📜 License
+
+This project is for educational and research purposes only.
+Unauthorized commercial use is prohibited.
+
+### ⭐ Support
+
+If this project helped you, leave a star on the repository 🤝
+For queries, feature suggestions, or collaborations: contact personally
