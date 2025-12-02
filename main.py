@@ -2,7 +2,6 @@ import os
 import numpy as np
 from flask import Flask, request, jsonify, render_template, flash, redirect, url_for
 from flask_mail import Mail, Message
-# from .model.cnn_model import BloodGroupCNN
 from pipeline import FingerprintBloodGroupPipeline
 import secrets
 import logging
@@ -70,22 +69,6 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 # Initialize extensions
 mail = Mail(app)
 pipeline  = FingerprintBloodGroupPipeline()
-
-# model = BloodGroupCNN()
-
-# # Load the trained model
-# MODEL_PATH = 'saved_models/bloodgroup_cnn.keras'
-# if os.path.exists(MODEL_PATH):
-#     model.load_model(MODEL_PATH)
-#     print("Model loaded successfully!")
-# else:
-#     print("Warning: Model not found. Please train the model first.")
-
-# # Try to load class names
-# CLASS_NAMES_PATH = 'saved_models/class_names.npy'
-# if os.path.exists(CLASS_NAMES_PATH):
-#     model.class_names = np.load(CLASS_NAMES_PATH, allow_pickle=True).tolist()
-#     print(f"Loaded class names: {model.class_names}")
 
 # Authentication routes
 @app.route('/login', methods=['GET', 'POST'])

@@ -209,23 +209,3 @@ class ImageProcessor:
         normalized = img.astype(np.float32) / 255.0
         
         return normalized
-
-
-# # Example usage
-# if __name__ == "__main__":
-#     # Initialize preprocessor
-#     preprocessor = ImageProcessor(target_size=(128, 128))
-    
-#     # Process a single image
-#     try:
-#         processed_image = preprocessor.preprocess_fingerprint("sample_fingerprint.jpg")
-#         print(f"Preprocessing successful!")
-#         print(f"Output shape: {processed_image.shape}")
-#         print(f"Output dtype: {processed_image.dtype}")
-#         print(f"Value range: [{processed_image.min():.3f}, {processed_image.max():.3f}]")
-        
-#         # Optional: Save processed image for visualization
-#         cv2.imwrite("processed_fingerprint.jpg", (processed_image * 255).astype(np.uint8))
-        
-#     except Exception as e:
-#         print(f"Error: {e}")
