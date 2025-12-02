@@ -70,9 +70,9 @@ Blood_group_detection_using_fingerprint/
 │ └── db_manager.py # SQLite storage operations
 │
 └── dataset_prepared/ # Dataset (train/val/test folders)
-| ├── train/
-| ├── validation/
-| └── test/
+  ├── train/
+  ├── validation/
+  └── test/
 ```
 
 ---
