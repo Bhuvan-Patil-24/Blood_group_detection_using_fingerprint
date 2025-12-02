@@ -4,7 +4,7 @@ def main():
     # Paths
     train_data_path = "D:/FYProject_25-26/Blood_group_detection_using_fingerprint/dataset_prepared/train"   # change if different
     val_data_path = "D:/FYProject_25-26/Blood_group_detection_using_fingerprint/dataset_prepared/validation"       # or None to auto-split
-    output_model = "D:/FYProject_25-26/Blood_group_detection_using_fingerprint/saved_models/bloodgroup_cnn2.keras"
+    output_model = "D:/FYProject_25-26/Blood_group_detection_using_fingerprint/saved_models/bloodgroup_cnn.keras"
 
     # Initialize model
     cnn = BloodGroupCNN(input_shape=(128, 128, 1), num_classes=8)
